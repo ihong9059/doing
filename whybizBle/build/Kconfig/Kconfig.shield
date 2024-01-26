@@ -1,0 +1,4 @@
+osource "/Users/honggwangseon/project/test/boards/shields/*/Kconfig.shield"
+osource "/Users/honggwangseon/project/newBoards/boards/shields/*/Kconfig.shield"
+osource "/Users/honggwangseon/project/whybizBle/boards/shields/*/Kconfig.shield"
+osource "/opt/nordic/ncs/v2.5.0/nrf/boards/shields/*/Kconfig.shield"
