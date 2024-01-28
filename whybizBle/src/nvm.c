@@ -70,18 +70,18 @@ void initNvm(void){
 		pWhybiz->flashFlag = FLASH_FLAG;
 		pWhybiz->version = 1;
 		pWhybiz->node = 111;
-		pWhybiz->channel = 1;//0: ethernet, 1: rs485, 2: lora
+		pWhybiz->channel = 2;//0: ethernet, 1: rs485, 2: lora
 		pWhybiz->ble = 123;
 		pWhybiz->adc1 = 0;
 		pWhybiz->adc2 = 0;
 		pWhybiz->sw = 0;
-		pWhybiz->relay = 0xff;
+		pWhybiz->relay = 0x55;
 		pWhybiz->lora_ch = 20;
 		pWhybiz->power = 16;
 		pWhybiz->rssi = 0;
 		(void)nvs_write(&fs, UTTEC_ID, pWhybiz, sizeof(whybiz_t)+1);
 	}
-	pWhybiz->channel = 1;//0: ethernet, 1: rs485, 2: lora , for test. 2024.01.26
+	// pWhybiz->channel = 1;//0: ethernet, 1: rs485, 2: lora , for test. 2024.01.26
 	dispFactors();
 }
 

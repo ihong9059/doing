@@ -47,11 +47,14 @@ void initSx1509(void){
 		printk("i2c write fail------------\r\n");		// return 0;
 		while(1);
 	}
-	initSxRelay();
+	// initSxRelay();
+	writeInitRelay();
+	delay(100);
+	
 	printk("relay status: %x, sw status: %x\r\n", 
 		readSxRelay(), readSxSw());
 
-	printk("------> end of initSx1509\r\n");
+	// printk("------> end of initSx1509\r\n");
 }
 
 uint8_t readSxRelay(void){
@@ -123,6 +126,18 @@ uint8_t readOutSxRelay(void){
 	}
 	printk("read buf: %x\r\n", buf);
 	return buf;
+}
+
+void writeInitRelay(void){
+	whybiz_t* pWhybiz = getWhybizFactor();
+	int err;
+	
+	uint8_t buf[2];
+	buf[0] = 0x10; buf[1] = pWhybiz->relay; //regB, all high
+	err = i2c_write(i2c0_dev, buf, 2, SX1509_ADDRESS);
+	if(err < 0){
+		printk("i2c write fail------------\r\n");
+	}
 }
 
 void writeOutSx(uint8_t bitNum, bool output){

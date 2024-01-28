@@ -1,8 +1,8 @@
-# Install script for directory: /opt/nordic/ncs/v2.5.0/zephyr/drivers
+# Install script for directory: C:/ncs/v2.5.0/zephyr/drivers
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/opt/nordic/ncs/toolchains/20d68df7e5")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files/Zephyr-Kernel")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -34,86 +34,86 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/opt/nordic/ncs/toolchains/20d68df7e5/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-objdump")
+  set(CMAKE_OBJDUMP "C:/ncs/toolchains/c57af46cb7/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-objdump.exe")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/disk/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/disk/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/interrupt_controller/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/interrupt_controller/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/misc/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/misc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/pcie/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/pcie/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/usb/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/usb/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/usb_c/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/usb_c/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/adc/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/adc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/clock_control/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/clock_control/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/console/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/console/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/entropy/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/entropy/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/flash/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/flash/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/gpio/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/gpio/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/i2c/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/i2c/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/pinctrl/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/pinctrl/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/serial/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/serial/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/honggwangseon/project/whybizBle/build/zephyr/drivers/timer/cmake_install.cmake")
+  include("C:/project/doing/whybizBle/build/zephyr/drivers/timer/cmake_install.cmake")
 endif()
 

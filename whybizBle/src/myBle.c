@@ -557,20 +557,24 @@ void procRxBle(uint8_t* data, uint16_t len){
 	uint8_t sensor = data[1];
 	uint8_t value = data[2];
 	whybiz_t* pFactor = getWhybizFactor();
+    connectFlag_t* pFlags = getConnectFlag();
 	printk("ca: %d, se: %d, value: %d\r\n", category, sensor, value);
 	switch(category){
 		case CTR_RELAY:
 			printk("relay setting\r\n");
 			writeOutSx(sensor, value);
+			procRelayTxBle(pFlags->ble);
 		break;
 		case CTR_LORA:
 			printk("lora setting by ble. tbd(2023.12.14)\r\n");
+			procLora(true);
 			// writeOutSx(sensor, value);
 		break;
 		case CTR_CHANNEL:
 			pFactor->channel = sensor - 1;
 			setUartChannel(pFactor->channel);
 			printk("channel setting by ble. tbd(2023.12.14)\r\n");
+			procChannel(true);
 		break;
 	}
 }
@@ -584,23 +588,28 @@ void sendToMobile(uint8_t* buf, uint8_t len){
 	}
 }
 
-void procChannel(void){
-	uint8_t buf[3] = {0, };
-    whybiz_t* pFactor = getWhybizFactor();
+void procChannel(bool ble){
+	if(ble){
+		uint8_t buf[3] = {0, };
+		whybiz_t* pFactor = getWhybizFactor();
 
-	buf[0] = CHANNEL_DEVICE; buf[1] = pFactor->channel; buf[2] = pFactor->lora_ch;
-	sendToMobile(buf, sizeof(buf));
+		buf[0] = CHANNEL_DEVICE; buf[1] = pFactor->channel; buf[2] = pFactor->lora_ch;
+		sendToMobile(buf, sizeof(buf));
+	}
 }
 
 #include "adc.h"
-void procAdcTxBle(void){
-	printk("procAdcTxBle\r\n");
+void procAdcTxBle(bool ble){
+	printk("procAdcTxBle\n");
 	readAdcValue();
-	uint8_t buf[3] = {0, };
-    whybiz_t* pFactor = getWhybizFactor();
 
-	buf[0] = ADC_DEVICE; buf[1] = pFactor->adc1; buf[2] = pFactor->adc2;
-	sendToMobile(buf, sizeof(buf));
+	if(ble){
+		uint8_t buf[3] = {0, };
+		whybiz_t* pFactor = getWhybizFactor();
+
+		buf[0] = ADC_DEVICE; buf[1] = pFactor->adc1; buf[2] = pFactor->adc2;
+		sendToMobile(buf, sizeof(buf));
+	}
 }
 
 void procSwitchTxBle(bool ble){
@@ -626,24 +635,29 @@ void procRelayTxBle(bool ble){
 	}
 }
 
-void procLora(void){
-	uint8_t buf[3] = {0, };
-    whybiz_t* pFactor = getWhybizFactor();
+void procLora(bool ble){
+	if(ble){
+		uint8_t buf[3] = {0, };
+		whybiz_t* pFactor = getWhybizFactor();
 
-	buf[0] = LORA_DEVICE; buf[1] = pFactor->power; buf[2] = pFactor->rssi;
-	sendToMobile(buf, sizeof(buf));
+		buf[0] = LORA_DEVICE; buf[1] = pFactor->power; buf[2] = pFactor->rssi;
+		sendToMobile(buf, sizeof(buf));
+	}
 }
 
-void procVersion(void){
-	uint8_t buf[3] = {0, };
-    whybiz_t* pFactor = getWhybizFactor();
+void procVersion(bool ble){
+	if(ble){
+		uint8_t buf[3] = {0, };
+		whybiz_t* pFactor = getWhybizFactor();
 
-	buf[0] = VERSION_DEVICE; buf[1] = pFactor->version; buf[2] = pFactor->ble;
-	sendToMobile(buf, sizeof(buf));
+		buf[0] = VERSION_DEVICE; buf[1] = pFactor->version; buf[2] = pFactor->ble;
+		sendToMobile(buf, sizeof(buf));
+	}
 }
 
 
 jsonFrame_t myJson = {0, };
+
 #define END_POSITION 
 void getJsonData(uint8_t* pBuf, uint8_t len){
 	bool startFlag = false;
@@ -655,13 +669,16 @@ void getJsonData(uint8_t* pBuf, uint8_t len){
 		} 
 		else{//alread startFlag
 			if(((i - myJson.start) == 6)&&(myJson.frame[i] == '}')){
-				printf("end frame\r\n");
+				// printk("end frame\r\n");
 				myJson.end = i;
 				myJson.flag = 1;
 			}
-
+			// if(myJson.frame[i] == '}') printk("myposition: %d\r\n", i);
 		}
 	} 
+	// printk("len: %d\r\n", len);
+	// for(int i = 0; i < len; i++) printk("%d, ", myJson.frame[i]);
+	// printk("\r\n");
 }
 
 void clearJsonData(void){
@@ -674,29 +691,22 @@ jsonFrame_t* getJsonFrame(void){
 }
 
 void dispJsonFrame(void){
-
-	printk("start: %d, end: %d\r\n", myJson.start, myJson.end);
+	// printk("start: %d, end: %d\r\n", myJson.start, myJson.end);
+	// printk("\r\n");
 	for(int i = 0; i < myJson.end; i++){
 		printk("%d,", myJson.frame[i]);
 	}
-	printk("<---end\r\n");
+	// printk("<---end\r\n");
 }
 
 void ble_write_thread(void)
 {
-	/* Don't go any further until BLE is initialized */
 	k_sem_take(&ble_init_ok, K_FOREVER);
 // test3
 	for (;;) {
 		/* Wait indefinitely for data to be sent over bluetooth */
 		struct uart_data_t *buf = k_fifo_get(&fifo_uart_rx_data,
 						     K_FOREVER);
-
-		// LOG_INF("ble_write_thread: %d", buf->len);
-/*
-		printk("ble_write_thread: %d\r\n", buf->len);
-		printk("buf: %s\r\n", buf->data);
-*/
 		// printk("---->%s\r\n", buf->data);
 		// LOG_INF("---->%s", buf->data);
 		getJsonData(buf->data, buf->len);	

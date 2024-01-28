@@ -11,5 +11,5 @@ void procTxBle(void);
 
 void procSwitchTxBle(bool);
 void procRelayTxBle(bool);
-void procAdcTxBle(void);
+void procAdcTxBle(bool);
 #endif 

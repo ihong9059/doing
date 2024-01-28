@@ -96,6 +96,6 @@ void readAdcValue(void){
     }
     pWhybiz->adc1 = sample_buffer[0]/10;
     pWhybiz->adc2 = sample_buffer[1]/10;
-    printk("Adc1: %d, Adc2: %d\r\n", 
+    printk("Adc1: %d, Adc2: %d\n", 
         pWhybiz->adc1, pWhybiz->adc2);
 }

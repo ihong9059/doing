@@ -19,6 +19,7 @@ uint8_t readSxSw(void);
 bool checkSx1509In(bool);
 
 void writeOutSx(uint8_t bitNum, bool output);
+void writeInitRelay(void);
 
 void testRelay(void);
 void testSw(void);

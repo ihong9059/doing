@@ -21,13 +21,13 @@ struct whybiz{
     uint8_t crc;
 };
 
-static const struct json_obj_descr whybiz_descr[] = {
-  JSON_OBJ_DESCR_PRIM(struct whybiz, no, JSON_TOK_NUMBER),
-  JSON_OBJ_DESCR_PRIM(struct whybiz, ca, JSON_TOK_NUMBER),
-  JSON_OBJ_DESCR_PRIM(struct whybiz, se, JSON_TOK_NUMBER),
-  JSON_OBJ_DESCR_PRIM(struct whybiz, va, JSON_TOK_NUMBER),
-  JSON_OBJ_DESCR_PRIM(struct whybiz, crc, JSON_TOK_NUMBER),
-};
+// static const struct json_obj_descr whybiz_descr[] = {
+//   JSON_OBJ_DESCR_PRIM(struct whybiz, no, JSON_TOK_NUMBER),
+//   JSON_OBJ_DESCR_PRIM(struct whybiz, ca, JSON_TOK_NUMBER),
+//   JSON_OBJ_DESCR_PRIM(struct whybiz, se, JSON_TOK_NUMBER),
+//   JSON_OBJ_DESCR_PRIM(struct whybiz, va, JSON_TOK_NUMBER),
+//   JSON_OBJ_DESCR_PRIM(struct whybiz, crc, JSON_TOK_NUMBER),
+// };
 
 #define SELECT1_NODE DT_NODELABEL(select1)
 #define SELECT2_NODE DT_NODELABEL(select2)
@@ -92,47 +92,61 @@ sx1509_t* getBeforeSxReg(void){
 
 void sendAck(ack_t ack){
     whybiz_t* pFactor = getWhybizFactor();
-
-    if(pFactor->channel == LORA_CHANNEL) printf("at=u");
-    if(pFactor->channel == RS485_CHANNEL){
+    
+    if(pFactor->channel == RS485_CHANNEL){ //for 4s485
         gpio_pin_set_dt(&rs485_en, 0);//set high, for tx
-        printf("%d, %d, %d, %d", ack.ca, ack.se, ack.va, ack.crc);
         delay(1);
-        delay(5);
-
-        gpio_pin_set_dt(&rs485_en, 1);//set low, for rx
-    }else{
         printf("%d, %d, %d, %d", ack.ca, ack.se, ack.va, ack.crc);
+        // printf("{%c, %c, %c, %c}", ack.ca, ack.se, ack.va, ack.crc);
+
+        delay(5);
+        gpio_pin_set_dt(&rs485_en, 1);//set low, for rx
+        // printk("%d, %d, %d, %d", ack.ca, ack.se, ack.va, ack.crc);
+    }else{
+        if(pFactor->channel == LORA_CHANNEL){
+            // printf("at=u%c%c%c%c\r\n", ack.ca, ack.se, ack.va, ack.crc);
+            printf("at=u%d, %d, %d, %d\r\n", ack.ca, ack.se, ack.va, ack.crc);
+        }else if(pFactor->channel == ETHERNET_CHANNEL){ // for ethernet
+            // printf("{%c, %c, %c, %c}", ack.ca, ack.se, ack.va, ack.crc);
+            printf("%d, %d, %d, %d", ack.ca, ack.se, ack.va, ack.crc);
+        }
+        else{
+            printk("error ack==================>\r\n");
+        }
+
     }
 }
 
+#include "sx1509.h"
+
 void newParse(uint8_t* pData, uint8_t len){
-    printk("newParse\r\n");
-    
+    connectFlag_t* pFlags = getConnectFlag();
+    whybiz_t* pFactor = getWhybizFactor();
+
+    // printk("newParse\r\n");    
     struct whybiz ctr;
 
-    ctr.no = pData[1];
-    ctr.ca = pData[2];
-    ctr.se = pData[3];
-    ctr.va = pData[4];
-    ctr.crc = pData[5];
-    printk("no: %d, ca: %d, se: %d, va: %d, crc: %d\r\n",
-    ctr.no, ctr.ca, ctr.se, ctr.va, ctr.crc);
-
-    whybiz_t* pFactor = getWhybizFactor();
+    ctr.no = pData[1]; ctr.ca = pData[2];
+    ctr.se = pData[3]; ctr.va = pData[4]; ctr.crc = pData[5];
+    // printk("no: %d, ca: %d, se: %d, va: %d, crc: %d\r\n",
+    // ctr.no, ctr.ca, ctr.se, ctr.va, ctr.crc);
     ack_t ack;
     ack.ca = 3; ack.se = ctr.se; ack.va= ctr.va; ack.crc = ctr.crc;
 
+    if(pFactor->channel == LORA_CHANNEL){
+        if(ctr.ca == 12) ctr.ca = CTR_RELAY;
+    }
+    if(ctr.ca == 12) ctr.ca = CTR_RELAY;
+
     switch(ctr.ca){
         case CTR_RELAY:
-            printk("no:%d, ca:%d, se:%d, va:%d, crc:%d\r\n",
-            ctr.no, ctr.ca, ctr.se, ctr.va, ctr.crc);
             writeOutSx(ctr.se, ctr.va);
-            procRelayTxBle(false);
-            ack.ca = 3; ack.se = pFactor->relay; pFactor->relay; ack.crc = ctr.crc;
+            saveFactorToFlash();
+            // delay(100);
+            procRelayTxBle(pFlags->ble);
+            ack.ca = 3; ack.se = pFactor->relay; 
+            ack.va = pFactor->relay; ack.crc = ctr.crc;
             sendAck(ack);
-
-            // printf("at=i");
         break;
         case CTR_LORA:
         case SET_LORA:
@@ -149,7 +163,7 @@ void newParse(uint8_t* pData, uint8_t len){
                 ctr.se, ctr.va);
             printk("save factor ###########\r\n");
             // setUartChannel(pFactor->channel);
-            // saveFactorToFlash();
+            saveFactorToFlash();
         break;
         case SET_VERSION:
             pFactor->version = ctr.se; pFactor->ble = ctr.va;
@@ -161,7 +175,8 @@ void newParse(uint8_t* pData, uint8_t len){
         break;
         case STATUS_RSSI:
             pFactor->rssi = ctr.se;
-            printk("-----> rssi: %d\r\n", ctr.se);
+            // printk("-----> rssi: %d\r\n", ctr.se);
+            printk("-----> rssi: %d\n", ctr.se);
         break;
         default: printk("error category: %d\r\n", ctr.ca); break;
     }
@@ -173,56 +188,11 @@ void uttecJsonTest(uint8_t* pData, uint8_t len){
 
 whybizFrame_t myWhybizFrame = {0, };
 
-void sendWhybizFrame(void){
-    whybizFrame_t* pJson = getWhybizFrame();
-    pJson->crc = pJson->node + pJson->category + pJson->sensor + pJson->sensor;
-    printk("{\"no\":%d,\"ca\":%d,\"se\":%d,\"va\":%d,\"crc\":%d}\r\n",
-    pJson->node, pJson->category, pJson->sensor, pJson->value, pJson->crc);
-}
-
 whybizFrame_t* getWhybizFrame(void){
     return &myWhybizFrame;
 }
 
 void testJsonOut(void){
-}
-
-
-void sendFactorAtConnection(void){
-    whybiz_t* pFactor = getWhybizFactor();
-    printk("------> sendFactorAtConnection\r\n");
-    for(int i = 0; i < MAX_CATEGORY; i++){
-        switch(i){
-            case CHANNEL_DEVICE:
-                procChannel();
-                printk("channel: %d, lora ch: %d\r\n", 
-                    pFactor->channel, pFactor->lora_ch);
-            break;
-            case ADC_DEVICE:
-                procAdcTxBle();
-                printk("sw: %d\r\n", pFactor->sw);
-            break;
-            case SWITCH_DEVICE: 
-                procSwitchTxBle(true);
-                printk("relay: %d\r\n", pFactor->relay);
-            break;
-            case RELAY_DEVICE: 
-                procRelayTxBle(true);
-                printk("adc1: %d, adc2: %d\r\n", pFactor->adc1, pFactor->adc2);
-            break;
-            case LORA_DEVICE: 
-                procLora();
-                printk("power: %d, rssi: %d\r\n", 
-                    pFactor->power, pFactor->rssi);
-            break;
-            case VERSION_DEVICE:
-                procVersion();
-                printk("version: %d, ble num: %d\r\n", 
-                    pFactor->version, pFactor->ble);
-            break;
-        }
-        k_sleep(K_MSEC(20));
-    }
 }
 
 void sendStatus2Server(void){
@@ -234,169 +204,59 @@ void sendStatus2Server(void){
     if(!(count++ % 2)){
         static uint32_t sendCount = 0;
         // uint8_t who = (sendCount++ % MAX_CATEGORY);
-        uint8_t who = (sendCount++ % 2) + SWITCH_DEVICE;
+        uint8_t who = (sendCount++ % CHANNEL_DEVICE) + ADC_DEVICE;
         pFrame->node = pFactor->node;
         switch(who){
         // switch(RELAY_DEVICE){
             case ADC_DEVICE: 
-                // printk("ADC_DEVICE: %d\r\n", who); 
-                // pFrame->category = ADC_DEVICE; 
-                // pFrame->sensor = pFactor->adc1; pFrame->value = pFactor->adc2; 
-                // procAdcTxBle();
+                // printk("ADC_DEVICE: %d\n", who); 
+                pFrame->category = ADC_DEVICE; 
+                pFrame->sensor = pFactor->adc1; pFrame->value = pFactor->adc2; 
+                procAdcTxBle(pFlags->ble);
             break;
-            case SWITCH_DEVICE: printk("SWITCH_DEVICE: %d\r\n", who); 
+            case SWITCH_DEVICE: 
+                // printk("SWITCH_DEVICE: %d\n", who); 
                 pFrame->category = SWITCH_DEVICE; 
                 pFrame->sensor = pFactor->sw; pFrame->value = pFactor->sw; 
-                procSwitchTxBle(pFlags->ble);
+                // procSwitchTxBle(pFlags->ble);
             break;
-            case RELAY_DEVICE: printk("RELAY_DEVICE: %d\r\n", who); 
+            case RELAY_DEVICE: 
+                // printk("RELAY_DEVICE: %d\n", who); 
                 pFrame->category = RELAY_DEVICE; 
                 pFrame->sensor = pFactor->relay; pFrame->value = pFactor->relay; 
-                procRelayTxBle(pFlags->ble);
+                // procRelayTxBle(pFlags->ble);
             break;
-            case LORA_DEVICE: printk("LORA_DEVICE: %d\r\n", who); 
-                // pFrame->category = LORA_DEVICE; 
-                // pFrame->sensor = pFactor->power; pFrame->value = pFactor->rssi; 
-                // procLora();
+            case LORA_DEVICE: 
+                // printk("LORA_DEVICE: %d\n", who); 
+                pFrame->category = LORA_DEVICE; 
+                pFrame->sensor = pFactor->power; pFrame->value = pFactor->rssi; 
+                procLora(pFlags->ble);
             break;
-            case VERSION_DEVICE: printk("VERSION_DEVICE: %d\r\n", who); 
-                // pFrame->category = VERSION_DEVICE; 
-                // pFrame->sensor = pFactor->version; pFrame->value = pFactor->ble; 
-                // procVersion();
+            case VERSION_DEVICE: 
+                // printk("VERSION_DEVICE: %d\n", who); 
+                pFrame->category = VERSION_DEVICE; 
+                pFrame->sensor = pFactor->version; pFrame->value = pFactor->ble; 
+                procVersion(pFlags->ble);
             break;
-            case CHANNEL_DEVICE: printk("CHANNEL_DEVICE: %d\r\n", who); 
-                // pFrame->category = CHANNEL_DEVICE; 
-                // pFrame->sensor = pFactor->channel; pFrame->value = pFactor->lora_ch; 
-                // procChannel();
+            case CHANNEL_DEVICE: 
+                // printk("CHANNEL_DEVICE: %d\n", who); 
+                pFrame->category = CHANNEL_DEVICE; 
+                pFrame->sensor = pFactor->channel; pFrame->value = pFactor->lora_ch; 
+                procChannel(pFlags->ble);
             break;
         }
     ack_t ack = {pFrame->category, pFrame->sensor, pFrame->sensor, 200};
-
     sendAck(ack);
     }
-}
-
-void sendStatus2Ble(void){
-    static uint32_t count = 0;
-    whybiz_t* pFactor = getWhybizFactor();
-    whybizFrame_t* pFrame = getWhybizFrame();
-
-    connectFlag_t* pFlags = getConnectFlag();
-
-    if(!(count++ % 2)){
-        static uint32_t sendCount = 0;
-        uint8_t who = (sendCount++ % MAX_CATEGORY);
-        pFrame->node = pFactor->node;
-        // switch(who){
-        switch(RELAY_DEVICE){
-            case ADC_DEVICE: 
-                // printk("ADC_DEVICE: %d\r\n", who); 
-                // pFrame->category = ADC_DEVICE; 
-                // pFrame->sensor = pFactor->adc1; pFrame->value = pFactor->adc2; 
-                // procAdcTxBle();
-            break;
-            case SWITCH_DEVICE: printk("SWITCH_DEVICE: %d\r\n", who); 
-                pFrame->category = SWITCH_DEVICE; 
-                pFrame->sensor = pFactor->sw; pFrame->value = pFactor->sw; 
-                procSwitchTxBle(true);
-            break;
-            case RELAY_DEVICE: printk("RELAY_DEVICE: %d\r\n", who); 
-                pFrame->category = RELAY_DEVICE; 
-                pFrame->sensor = pFactor->relay; pFrame->value = pFactor->relay; 
-                procRelayTxBle(true);
-            break;
-            case LORA_DEVICE: printk("LORA_DEVICE: %d\r\n", who); 
-                // pFrame->category = LORA_DEVICE; 
-                // pFrame->sensor = pFactor->power; pFrame->value = pFactor->rssi; 
-                // procLora();
-            break;
-            case VERSION_DEVICE: printk("VERSION_DEVICE: %d\r\n", who); 
-                // pFrame->category = VERSION_DEVICE; 
-                // pFrame->sensor = pFactor->version; pFrame->value = pFactor->ble; 
-                // procVersion();
-            break;
-            case CHANNEL_DEVICE: printk("CHANNEL_DEVICE: %d\r\n", who); 
-                // pFrame->category = CHANNEL_DEVICE; 
-                // pFrame->sensor = pFactor->channel; pFrame->value = pFactor->lora_ch; 
-                // procChannel();
-            break;
-        }
-    ack_t ack = {pFrame->category, pFrame->sensor, pFrame->sensor, 200};
-
-    sendAck(ack);
-    }
-}
-
-void sendJsonForStatus(void){
-    // static uint32_t count = 0;
-    // whybiz_t* pFactor = getWhybizFactor();
-    // whybizFrame_t* pFrame = getWhybizFrame();
-
-    // connectFlag_t* pFlags = getConnectFlag();
-
-    // if(!(count++ % 2)){
-    //     static uint32_t sendCount = 0;
-    //     uint8_t who = (sendCount++ % MAX_CATEGORY);
-    //     pFrame->node = pFactor->node;
-    //     // printk("who: %d\r\n", who);
-    //     switch(who){
-    //         case ADC_DEVICE: 
-    //             printk("ADC_DEVICE: %d\r\n", who); 
-    //             pFrame->category = ADC_DEVICE; 
-    //             pFrame->sensor = pFactor->adc1; pFrame->value = pFactor->adc2; 
-    //             procAdcTxBle();
-    //         break;
-    //         case SWITCH_DEVICE: printk("SWITCH_DEVICE: %d\r\n", who); 
-    //             pFrame->category = SWITCH_DEVICE; 
-    //             pFrame->sensor = pFactor->sw; pFrame->value = pFactor->sw; 
-    //             procSwitchTxBle();
-    //         break;
-    //         case RELAY_DEVICE: printk("RELAY_DEVICE: %d\r\n", who); 
-    //             pFrame->category = RELAY_DEVICE; 
-    //             pFrame->sensor = pFactor->relay; pFrame->value = pFactor->relay; 
-    //             procRelayTxBle();
-    //         break;
-    //         case LORA_DEVICE: printk("LORA_DEVICE: %d\r\n", who); 
-    //             pFrame->category = LORA_DEVICE; 
-    //             pFrame->sensor = pFactor->power; pFrame->value = pFactor->rssi; 
-    //             procLora();
-    //         break;
-    //         case VERSION_DEVICE: printk("VERSION_DEVICE: %d\r\n", who); 
-    //             pFrame->category = VERSION_DEVICE; 
-    //             pFrame->sensor = pFactor->version; pFrame->value = pFactor->ble; 
-    //             procVersion();
-    //         break;
-    //         case CHANNEL_DEVICE: printk("CHANNEL_DEVICE: %d\r\n", who); 
-    //             pFrame->category = CHANNEL_DEVICE; 
-    //             pFrame->sensor = pFactor->channel; pFrame->value = pFactor->lora_ch; 
-    //             procChannel();
-    //         break;
-    //     }
-    //     pFrame->crc = pFrame->node + pFrame->category + pFrame->sensor + pFrame->value;  
-        
-    //     if(pFactor->channel == LORA_CHANNEL) printf("at=u");
-    //     if(pFactor->channel == RS485_CHANNEL){
-    //         gpio_pin_set_dt(&rs485_en, 0);//set high, for tx
-    //         printf("{\"no\":%d,\"ca\":%d,\"se\":%d,\"va\":%d,\"crc\":%d}\r\n",
-    //         pFrame->node, pFrame->category, pFrame->sensor, pFrame->value, pFrame->crc);
-    //         delay(1);
-    //         delay(5);
-
-    //         gpio_pin_set_dt(&rs485_en, 1);//set low, for rx
-    //     }else{
-    //         printf("{\"no\":%d,\"ca\":%d,\"se\":%d,\"va\":%d,\"crc\":%d}\r\n",
-    //         pFrame->node, pFrame->category, pFrame->sensor, pFrame->value, pFrame->crc);
-    //     }
-    // }
 }
 
 void dispChannel(void){
     whybiz_t* pFactor = getWhybizFactor();
     switch(pFactor->channel){
-        case 0: printk("uart: Ethernet--> %d\r\n", pFactor->channel); break;
-        case 1: printk("uart: rs485--> %d\r\n", pFactor->channel); break;
-        case 2: printk("uart: lora--> %d\r\n", pFactor->channel); break;
-        case 3: printk("uart: T.B.D--> %d\r\n", pFactor->channel); break;
+        case ETHERNET_CHANNEL: printk("uart: Ethernet--> %d\n", pFactor->channel); break;
+        case RS485_CHANNEL: printk("uart: rs485--> %d\n", pFactor->channel); break;
+        case LORA_CHANNEL: printk("uart: lora--> %d\n", pFactor->channel); break;
+        case BLANK_CHANNEL: printk("uart: T.B.D--> %d\n", pFactor->channel); break;
     }
 }
 

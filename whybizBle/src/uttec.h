@@ -106,26 +106,19 @@ void uttecJsonTest(uint8_t* pData, uint8_t len);
 sx1509_t* getBeforeSxReg(void);
 whybiz_t* getWhybizFactor(void);
 
-void sendWhybizFrame(void);
 whybizFrame_t* getWhybizFrame(void);
 void testJsonOut(void);
-
 
 void clearJsonData(void);
 jsonFrame_t* getJsonFrame(void);
 void dispJsonFrame(void);
 
 connectFlag_t* getConnectFlag(void);
-void sendFactorAtConnection(void);
 
+void procChannel(bool);
+void procLora(bool);
+void procVersion(bool);
 
-void procChannel(void);
-void procLora(void);
-void procVersion(void);
-
-void sendJsonForStatus(void);
-// void sendStatus(void);
-void sendStatus2Ble(void);
 void sendStatus2Server(void);
 
 void dispChannel(void);
@@ -134,7 +127,7 @@ void delay(uint16_t msec);
 
 void newParse(uint8_t* pData, uint8_t len);
 
-void sendAck(act_t);
+void sendAck(ack_t ack);
 
 #endif 
 
