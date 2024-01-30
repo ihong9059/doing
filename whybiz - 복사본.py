@@ -25,26 +25,33 @@ class SendThread(threading.Thread):
         self.sendData = data
         
     def bind(self):
-        # mainCount = 0
+        mainCount = 0
+        # self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.client.connect((testHost0, testPort0))
 
         global sendFlag
         global sendData
         while True:
             try:
+                # data = self.client.recv(256)
                 if(sendFlag):
                     print("send data for control")
                     sendFlag = False
-                    whybiz.sendall(sendData)
+                    self.client.sendall(sendData)
+                # rasp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                # rasp.connect((raspIp, raspPort))
+                # rasp.sendall(data)
+                # rasp.close()
                     print(".")
             except Exception as e:
                 print(e)
-                whybiz.close()
+                self.client.close()
                 print('Fail to send data to server:{}, \
                     port:{}'.format(testHost0, testPort0))
                 time.sleep(5)
                 print("Reconnect to Host: {}, port: {}", testHost0, testPort0)
-                whybiz.connect((testHost0, testPort0))
-            # mainCount += 1    
+                self.client.connect((testHost0, testPort0))
+            mainCount += 1    
 
     def run(self):
         try:
@@ -59,9 +66,12 @@ class toRasp(threading.Thread):
         super().__init__() 
 
     def bind(self):
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.connect((testHost0, testPort0))
+        print('connected to whybiz')
         while True:
             try:
-                data = whybiz.recv(256)
+                data = self.client.recv(256)
                 rasp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 rasp.connect((raspIp, raspPort))
                 rasp.sendall(data)
@@ -75,7 +85,7 @@ class toRasp(threading.Thread):
                 time.sleep(5)
                 print("Reconnect to Host: {}, port: {}", testHost0, testPort0)
                 self.client.connect((testHost0, testPort0))
-            # mainCount += 1    
+            mainCount += 1    
 
     def run(self):
         try:
@@ -98,6 +108,7 @@ class ReceiveThread(threading.Thread):
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         my_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         my_socket.bind((myIp, myPort))
+        # my_socket.bind((testHost0, testPort0))
         my_socket.listen()
         global sendFlag
         global sendData
@@ -111,12 +122,14 @@ class ReceiveThread(threading.Thread):
                     sendFlag = True
                     sendData = data
                     print('sent to send thread')
+                # self.sendThread.setFlag(self, True, data)
             except Exception as e:
                 print(e)
                 myClient.close()
                 print('Fail to send date to server:{}, \
                     port:{}'.format(testHost0, testPort0))
             mainCount += 1    
+            # time.sleep(3)
 
     def run(self):
         try:
@@ -133,9 +146,9 @@ def main():
     mySend.daemon = True
     mySend.start() 
 
-    myRasp = toRasp()
-    myRasp.daemon = True
-    myRasp.start() 
+    # myRasp = toRasp()
+    # myRasp.daemon = True
+    # myRasp.start() 
 
     myReceive = ReceiveThread()
     myReceive.daemon = True

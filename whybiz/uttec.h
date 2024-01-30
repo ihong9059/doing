@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define BLE_PROGRAM     1
+// #define BLE_PROGRAM     1
 
 #define FLASH_FLAG  0xaaaa
 
@@ -90,6 +90,13 @@ typedef struct{
     uint8_t sw;
 } sx1509_t;
 
+typedef struct{
+    uint8_t ca;
+    uint8_t se;
+    uint8_t va;
+    uint8_t crc;
+} ack_t;
+
 /* initEeprom, initSx1509, initPort. 2023.12.06 */ 
 void initUttec(void);
 
@@ -119,5 +126,8 @@ void saveFactorToFlash(void);
 
 void parseLoraInfo(uint8_t cmd, uint8_t value);
 void dispUartChannel(void);
+
+void sendAck(ack_t ack);
+
 #endif 
 

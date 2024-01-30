@@ -3,18 +3,6 @@
 #include "uttec.h"
 #include "myJson.h"
 
-// void testSendJson(void){
-//   StaticJsonDocument<MAX_DOC> doc;
-//   uint8_t rand = random(1, 100);
-//   doc["no"] = rand;
-//   doc["ca"] = rand % 4;
-//   doc["de"] = rand;
-//   doc["va"] = rand;
-//   doc["crc"] = rand * 3 + (rand % 4);
-
-//   serializeJson(doc, Serial2);
-// }
-
 #include "sx1509Lib.h"
 #include <stdio.h>
 
@@ -34,11 +22,17 @@ void parseWifiJson(String pData){
   ctr.se = doc["se"];
   ctr.va = doc["va"];
   bool ctrFlag = false;
+  ack_t ack;
 
   switch(ctr.ca){
     case CTR_RELAY:
       Serial.printf("setRelay\r\n");
       setRelay(ctr.se, ctr.va);
+      ack.ca = 3; ack.se = pFactor->relay; 
+      ack.va = pFactor->relay; ack.crc = ctr.crc;
+      sendAck(ack);
+      saveFactorToFlash();  
+
     break;
     case CTR_LORA:
     case SET_LORA:
@@ -74,30 +68,16 @@ void parseWifiJson(String pData){
   }
 }
 
-	// for(int i = 0; i < len; i++){
-	// 	myJson.frame[i] = *pBuf++;
-	// 	if((myJson.frame[i] == '{')&&(!startFlag)){
-	// 		myJson.start = i;	
-	// 		startFlag = true;
-	// 	} 
-	// 	else{//alread startFlag
-	// 		if(((i - myJson.start) == 6)&&(myJson.frame[i] == '}')){
-	// 			// printk("end frame\r\n");
-	// 			myJson.end = i;
-	// 			myJson.flag = 1;
-	// 		}
-	// 		// if(myJson.frame[i] == '}') printk("myposition: %d\r\n", i);
-	// 	}
-	// }
-
 void parseUart(void){
   newFrame_t myFrame = {0, };
   if(Serial2.available()){
+    // Serial.printf("++++++++++++++++++++++++++++\r\n");
     while(Serial2.available() > 0){
       char test = Serial2.read();
+      // Serial.printf("%d,", test); 
       if(test == '{'){
         myFrame.startFlag = true;
-        Serial.printf("---------< start frame\r\n");
+        // Serial.printf("---------< start frame\r\n");
       }
       else if(myFrame.startFlag){
         myFrame.frame[myFrame.id++] = test;
@@ -105,8 +85,68 @@ void parseUart(void){
         if(test == '}'){
           Serial.printf("---------< end frame\r\n");
           myFrame.startFlag = false;
+          myFrame.endFlag = true;
         } 
       } 
+    }
+    // Serial.printf("++++++++++++++++++++++++++++\r\n");
+  }
+
+  if(myFrame.endFlag){// process cmd
+    uttecJson_t ctr;
+    ctr.no = myFrame.frame[0];
+    ctr.ca = myFrame.frame[1];
+    ctr.se = myFrame.frame[2];
+    ctr.va = myFrame.frame[3];
+    ctr.crc = myFrame.frame[4];
+
+    // if(pFactor->channel == LORA_CHANNEL){
+    //     if(ctr.ca == 12) ctr.ca = CTR_RELAY;
+    // }
+    if(ctr.ca == 12) ctr.ca = CTR_RELAY; //for lora pass, when 13, return, no message pass
+
+    int16_t totalCrc = ctr.no + ctr.va + ctr.ca + ctr.se;
+    Serial.printf("no: %d, ca: %d, se: %d, va: %d\r\n", 
+      ctr.no, ctr.ca, ctr.se, ctr.va);
+
+    ack_t ack;
+    whybiz_t* pFactor = getWhybizFactor();
+    switch(ctr.ca){
+      case CTR_RELAY:
+          Serial.printf("no:%d, ca:%d, se:%d, va:%d, crc:%d\r\n",
+          ctr.no, ctr.ca, ctr.se, ctr.va, ctr.crc);
+          setRelay(ctr.se, ctr.va);
+          ack.ca = 3; ack.se = pFactor->relay; 
+          ack.va = pFactor->relay; ack.crc = ctr.crc;
+          sendAck(ack);
+          saveFactorToFlash();  
+      break;
+      case CTR_LORA:
+      case SET_LORA:
+          pFactor->power = ctr.se;
+          Serial.printf("set lora power-> se: %d, va: %d\r\n", 
+              ctr.se, ctr.va);
+          Serial.printf("save factor ###########\r\n");
+          saveFactorToFlash();
+      break;
+      case CTR_CHANNEL:
+      case SET_CHANNEL:
+          pFactor->channel = ctr.se; pFactor->lora_ch = ctr.va;
+          Serial.printf("set channel-> uart: %d, lora: %d\r\n", 
+              ctr.se, ctr.va);
+          Serial.printf("save factor ###########\r\n");
+          setUartChannel(pFactor->channel);
+          saveFactorToFlash();
+      break;
+      case SET_VERSION:
+          pFactor->version = ctr.se; pFactor->ble = ctr.va;
+          pFactor->node = ctr.va;
+          Serial.printf("set number-> node: %d, ble: %d\r\n", 
+              ctr.se, ctr.va);
+          Serial.printf("save factor ###########\r\n");
+          saveFactorToFlash();
+      break;
+      default: Serial.printf("error category: %d\r\n", ctr.ca); break;
     }
   }
 } 

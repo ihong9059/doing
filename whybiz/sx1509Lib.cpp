@@ -25,6 +25,13 @@ void initSx1509(void){
     io.pinMode(i + 8, OUTPUT); // Set LED pin to OUTPUT
     io.pinMode(i, INPUT_PULLUP); // Set LED pin to OUTPUT
   }
+  whybiz_t* pFactor = getWhybizFactor();
+  uint8_t relay = pFactor->relay;
+  for(int i = 0; i < 8; i++){
+    setRelay(i, relay & 0x01);
+    relay = relay >> 1;
+  }
+  Serial.printf("---------relay: %d\r\n", pFactor->relay);
 }
 
 void testRelay(void){

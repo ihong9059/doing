@@ -21,5 +21,7 @@ void SendWebsite();
 void ProcessSelect();
 void ProcessToggle();
 
+bool getWifiConnection(void);
+
 #endif 
 

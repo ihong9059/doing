@@ -40,7 +40,8 @@ void callTest(void){
 
 class MyCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string rxValue = pCharacteristic->getValue();
+      // std::string rxValue = pCharacteristic->getValue();
+      String rxValue = pCharacteristic->getValue();
       Serial.printf("length: %d\r\n", rxValue.length());
       Serial.printf("ca: %d, se: %d, va: %d\r\n", rxValue[0], rxValue[1], rxValue[2]);
       uint8_t ca = rxValue[0];
@@ -60,6 +61,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
           if(va == 0) pFactor->lora_ch = 20; //for mobile control
           else pFactor->lora_ch = va; //for server control
           printf("<------- setUartChannel ---------->: %d\r\n", se);
+          saveFactorToFlash();
         break;
         case CTR_LORA:
           pFactor->power = se;

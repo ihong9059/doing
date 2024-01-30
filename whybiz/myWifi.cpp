@@ -12,7 +12,6 @@
 // #define USE_INTRANET
 // #define MYHOME 1
 
-
 #ifdef MYHOME
 #define LOCAL_SSID "ihong"
 #define LOCAL_PASS "hongks@6063"
@@ -44,7 +43,7 @@ IPAddress secondaryDNS(8, 8, 4, 4); //optional
 WiFiServer uttecServer(20000);
 
 void initWifi(void){
-  disableCore0WDT();
+  // disableCore0WDT();
 #ifdef USE_INTRANET
   if (!WiFi.config(local_IP, local_gw, subnet, primaryDNS, secondaryDNS)) {
     Serial.println("STA Failed to configure");
@@ -68,6 +67,7 @@ void initWifi(void){
   Actual_IP = WiFi.softAPIP();
   Serial.print("IP address: "); Serial.println(Actual_IP);
 #endif
+  // while(1);
 
   printWifiStatus();
   uttecServer.begin();
@@ -91,8 +91,13 @@ void connectToServer(void){
   client.stop();
 }
 
+static bool connectFlag = false;
+
+bool getWifiConnection(void){
+  return connectFlag;
+}
+
 void serverForGeneral(void){
-  static bool connectFlag = false;
   WiFiClient uttec_client = uttecServer.available();
 
   if(!uttec_client){
@@ -102,7 +107,8 @@ void serverForGeneral(void){
   Serial.printf("new client");
 
   while(uttec_client.connected()){
-    parseReceiveJson();
+    // parseReceiveJson();
+    parseUart();
     if(!connectFlag){
       Serial.print("remoteIP: ");
       Serial.println(uttec_client.remoteIP());
@@ -114,7 +120,7 @@ void serverForGeneral(void){
       whybiz_t* pFactor = getWhybizFactor();
 
       String receiveData = uttec_client.readStringUntil('\n');
-      // Serial.println(receiveData);
+      Serial.println(receiveData);
       parseWifiJson(receiveData);
       char temp [100] = {0, };
       uint8_t ca = count % 7;

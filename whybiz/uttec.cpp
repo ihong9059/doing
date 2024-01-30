@@ -42,7 +42,7 @@ void initPort(void){
   digitalWrite(LORA_RST, 0);
   delay(300);
   digitalWrite(LORA_RST, 1);
-  setUartChannel(ETHERNET_CHANNEL); // basic channel
+  setUartChannel(myWhybiz.channel); // basic channel
   // setUartChannel(LORA_CHANNEL); //for lora test. 2023.12.20
   digitalWrite(RS485_EN, 0); //for read 
 }
@@ -76,7 +76,7 @@ void initEeprom(void){
   
   if(myWhybiz.flashFlag != FLASH_FLAG){
     Serial.printf("New software version---> 2023.12.06\r\n");
-    delay(2000);
+    delay(1000);
     myWhybiz.flashFlag = FLASH_FLAG;
     myWhybiz.version = VERSION;
     myWhybiz.node = 0;
@@ -182,20 +182,40 @@ void testEeprom(void){
   EEPROM.commit();
 }
 
+void sendAck(ack_t ack){
+    whybiz_t* pFactor = getWhybizFactor();
+
+    if(pFactor->channel == RS485_CHANNEL){ //for 4s485
+        digitalWrite(RS485_EN, 1); //for write 
+        // gpio_pin_set_dt(&rs485_en, 0);//set high, for tx
+        delay(1);
+        Serial2.printf("%d, %d, %d, %d", ack.ca, ack.se, ack.va, ack.crc);
+        // printf("{%c, %c, %c, %c}", ack.ca, ack.se, ack.va, ack.crc);
+
+        delay(5);
+        digitalWrite(RS485_EN, 0); //for read 
+        // gpio_pin_set_dt(&rs485_en, 1);//set low, for rx
+        // printk("%d, %d, %d, %d", ack.ca, ack.se, ack.va, ack.crc);
+    }else{
+        if(pFactor->channel == LORA_CHANNEL){
+            // printf("at=u%c%c%c%c\r\n", ack.ca, ack.se, ack.va, ack.crc);
+            Serial2.printf("at=u%d, %d, %d, %d\r\n", ack.ca, ack.se, ack.va, ack.crc);
+        }else if(pFactor->channel == ETHERNET_CHANNEL){ // for ethernet
+            // printf("{%c, %c, %c, %c}", ack.ca, ack.se, ack.va, ack.crc);
+            Serial2.printf("%d, %d, %d, %d", ack.ca, ack.se, ack.va, ack.crc);
+        }
+        else{
+            Serial.printf("error ack==================>\r\n");
+        }
+    }
+}
+
 void sendJsonForStatus(void){
     static uint32_t count = 0;
     whybiz_t* pFactor = getWhybizFactor();
     whybizFrame_t* pFrame = getWhybizFrame();
 
     connectFlag_t* pFlags = getConnectFlag();
-
-    // if(!pFlags->first){
-    //     sendFactorAtConnection();
-    //     pFlags->first = true;
-    //     return;
-    // }
-    // if(pFlags->ble) printf("Ble connected---->\r\n");
-    // else return;
 
     if(!(count++ % 2)){
         static uint32_t sendCount = 0;
@@ -229,21 +249,22 @@ void sendJsonForStatus(void){
                 pFrame->sensor = pFactor->channel; pFrame->value = pFactor->lora_ch; 
             break;
         }
-        pFrame->crc = pFrame->node + pFrame->category + pFrame->sensor + pFrame->value;  
+        pFrame->crc = pFrame->node + pFrame->category + pFrame->value + pFrame->value;  
         
 //for server through selected uart channel. printf. 2023.12.15
         dispUartChannel();
-        digitalWrite(RS485_EN, 1); //for write 
-        Serial.printf("sendJsonForStatus---->\r\n");
-        if(pFactor->channel == LORA_CHANNEL){
-          Serial2.printf("at=u");
-        }
-        delay(1);
-        Serial2.printf("{\"no\":%d,\"ca\":%d,\"se\":%d,\"va\":%d,\"crc\":%d}\r\n",
-        pFrame->node, pFrame->category, pFrame->sensor, pFrame->value, pFrame->crc);
-        delay(4);
-        digitalWrite(RS485_EN, 0); //for read 
-
+        ack_t ack = {pFrame->category, pFrame->sensor, pFrame->value, 200};
+        sendAck(ack);
+        // digitalWrite(RS485_EN, 1); //for write 
+        // Serial.printf("sendJsonForStatus---->\r\n");
+        // if(pFactor->channel == LORA_CHANNEL){
+        //   Serial2.printf("at=u");
+        // }
+        // delay(1);
+        // Serial2.printf("{\"no\":%d,\"ca\":%d,\"se\":%d,\"va\":%d,\"crc\":%d}\r\n",
+        // pFrame->node, pFrame->category, pFrame->sensor, pFrame->value, pFrame->crc);
+        // delay(4);
+        // digitalWrite(RS485_EN, 0); //for read 
     }
 }
 
