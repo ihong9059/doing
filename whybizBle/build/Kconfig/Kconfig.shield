@@ -1,3 +1,4 @@
-osource "c:/project/newboards/boards/shields/*/Kconfig.shield"
-osource "c:/project/doing/whybizble/boards/shields/*/Kconfig.shield"
-osource "C:/ncs/v2.5.0/nrf/boards/shields/*/Kconfig.shield"
+osource "/Users/honggwangseon/project/test/boards/shields/*/Kconfig.shield"
+osource "/Users/honggwangseon/project/newBoards/boards/shields/*/Kconfig.shield"
+osource "/Users/honggwangseon/project/doing/whybizBle/boards/shields/*/Kconfig.shield"
+osource "/opt/nordic/ncs/v2.5.0/nrf/boards/shields/*/Kconfig.shield"

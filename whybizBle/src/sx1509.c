@@ -178,9 +178,14 @@ void writeOutSx(uint8_t bitNum, bool output){
 			if(output) regB = regB | (uint8_t)~BIT_7;
 			else regB = regB & BIT_7;
 		break;
+		default:
+		return;
 	}
 	uint8_t buf[2];
 	buf[0] = 0x10; buf[1] = regB; //regB, all high
+
+	if(regB == 0xff) return; //if error
+
 	err = i2c_write(i2c0_dev, buf, 2, SX1509_ADDRESS);
 	if(err < 0){
 		printk("i2c write fail------------\r\n");

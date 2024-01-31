@@ -16,7 +16,9 @@ uint32_t count2 = 0;
 void taskParse(void* parameters){
   uint32_t parseCount = 0;
   for(;;){
+#ifndef BLE_PROGRAM  
     if(!getWifiConnection())
+#endif
       parseUart();
     if(!(parseCount%100))
       Serial.printf("parse: %d\r\n", parseCount);
@@ -24,8 +26,6 @@ void taskParse(void* parameters){
     parseCount++;
   }
 }
-#ifdef BLE_PROGRAM  
-#endif
 
 void setup() {
   Serial.begin(115200);

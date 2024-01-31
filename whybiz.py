@@ -2,7 +2,8 @@ import threading
 import time 
 import socket 
 
-testHost0 = '192.168.0.200'
+# testHost0 = '192.168.0.200' # home
+testHost0 = '192.168.8.200' # uttec office
 testPort0 = 2000
 
 raspIp = '127.0.0.1'
@@ -11,8 +12,11 @@ raspPort = 6666
 sendFlag = False
 sendData = ''
 
+print('connect wait, ip: {}, port: {}'.format(testHost0, testPort0))
+
 whybiz = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 whybiz.connect((testHost0, testPort0))
+
 print('connected to whybiz')
 
 class SendThread(threading.Thread):

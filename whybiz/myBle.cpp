@@ -40,8 +40,8 @@ void callTest(void){
 
 class MyCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
-      // std::string rxValue = pCharacteristic->getValue();
-      String rxValue = pCharacteristic->getValue();
+      std::string rxValue = pCharacteristic->getValue(); // for mac
+      // String rxValue = pCharacteristic->getValue(); //for windows
       Serial.printf("length: %d\r\n", rxValue.length());
       Serial.printf("ca: %d, se: %d, va: %d\r\n", rxValue[0], rxValue[1], rxValue[2]);
       uint8_t ca = rxValue[0];

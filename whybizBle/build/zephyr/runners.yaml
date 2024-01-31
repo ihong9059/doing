@@ -12,13 +12,13 @@ debug-runner: jlink
 
 # Common runner configuration values.
 config:
-  board_dir: C:/project/doing/whybizBle/boards/arm/whybiz_nrf52832
+  board_dir: /Users/honggwangseon/project/doing/whybizBle/boards/arm/whybiz_nrf52832
   # Build outputs:
   elf_file: zephyr.elf
   hex_file: zephyr.hex
   bin_file: zephyr.bin
   # Host tools:
-  gdb: C:/ncs/toolchains/c57af46cb7/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb-py.exe
+  gdb: /opt/nordic/ncs/toolchains/20d68df7e5/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb
 
 # Runner specific arguments
 args:
